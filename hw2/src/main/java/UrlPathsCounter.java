@@ -24,13 +24,8 @@ public class UrlPathsCounter extends Configured implements Tool {
         return job.waitForCompletion(true) ? 0 : 1;
     }
 
-    static public void main(String[] args) {
-        int ret=0;
-        try {
-            ret = ToolRunner.run(new UrlPathsCounter(), args);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    static public void main(String[] args) throws Exception {
+        int ret = ToolRunner.run(new UrlPathsCounter(), args);
         System.exit(ret);
     }
 
@@ -73,10 +68,10 @@ public class UrlPathsCounter extends Configured implements Tool {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-//            String[] split = value.toString().split("\t");
-//            String url = split[2];
-//
-//            context.write(new Text(url), NullWritable.get());
+            String[] split = value.toString().split("\t");
+            String url = split[2];
+
+            context.write(new Text(url), NullWritable.get());
         }
     }
 
