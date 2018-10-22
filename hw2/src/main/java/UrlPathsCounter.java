@@ -24,8 +24,13 @@ public class UrlPathsCounter extends Configured implements Tool {
         return job.waitForCompletion(true) ? 0 : 1;
     }
 
-    static public void main(String[] args) throws Exception {
-        int ret = ToolRunner.run(new UrlPathsCounter(), args);
+    static public void main(String[] args) {
+        int ret=0;
+        try {
+            ret = ToolRunner.run(new UrlPathsCounter(), args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         System.exit(ret);
     }
 
@@ -41,7 +46,7 @@ public class UrlPathsCounter extends Configured implements Tool {
         job.setReducerClass(ReducerUnique.class);
 
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(LongWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
         return job;
     }
@@ -64,21 +69,21 @@ public class UrlPathsCounter extends Configured implements Tool {
         return job;
     }
 
-    public static class MapperUnique extends Mapper<LongWritable, Text, Text, LongWritable> {
+    public static class MapperUnique extends Mapper<LongWritable, Text, Text, NullWritable> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t");
             String url = split[2];
 
-            context.write(new Text(url), new LongWritable(0));
+            context.write(new Text(url), NullWritable.get());
         }
     }
 
-    public static class ReducerUnique extends Reducer<Text, LongWritable, Text, LongWritable> {
+    public static class ReducerUnique extends Reducer<Text, NullWritable, Text, NullWritable> {
         @Override
-        protected void reduce(Text key, Iterable<LongWritable> visits, Context context) throws IOException, InterruptedException {
-            context.write(key, new LongWritable(0));
+        protected void reduce(Text key, Iterable<NullWritable> visits, Context context) throws IOException, InterruptedException {
+            context.write(key, NullWritable.get());
         }
     }
 
