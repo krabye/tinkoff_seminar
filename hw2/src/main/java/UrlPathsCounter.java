@@ -41,7 +41,7 @@ public class UrlPathsCounter extends Configured implements Tool {
         job.setReducerClass(ReducerUnique.class);
 
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(NullWritable.class);
+        job.setOutputValueClass(LongWritable.class);
 
         return job;
     }
@@ -64,21 +64,21 @@ public class UrlPathsCounter extends Configured implements Tool {
         return job;
     }
 
-    public static class MapperUnique extends Mapper<LongWritable, Text, Text, NullWritable> {
+    public static class MapperUnique extends Mapper<LongWritable, Text, Text, LongWritable> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t");
             String url = split[2];
 
-            context.write(new Text(url), NullWritable.get());
+            context.write(new Text(url), new LongWritable(0));
         }
     }
 
-    public static class ReducerUnique extends Reducer<Text, NullWritable, Text, NullWritable> {
+    public static class ReducerUnique extends Reducer<Text, LongWritable, Text, LongWritable> {
         @Override
-        protected void reduce(Text key, Iterable<NullWritable> visits, Context context) throws IOException, InterruptedException {
-            context.write(key, NullWritable.get());
+        protected void reduce(Text key, Iterable<LongWritable> visits, Context context) throws IOException, InterruptedException {
+            context.write(key, new LongWritable(0));
         }
     }
 
