@@ -94,10 +94,11 @@ public class UrlParamsCounter extends Configured implements Tool {
                 return;
 
             for (String pair: query.split("&"))
-                context.write(
-                        new Text(uri.getHost() + "/" + uri.getRawPath()),
-                        new Text(pair.split("=")[0])
-                );
+                if (pair.contains("="))
+                    context.write(
+                            new Text(uri.getHost() + "/" + uri.getRawPath()),
+                            new Text(pair.split("=")[0])
+                    );
         }
     }
 
