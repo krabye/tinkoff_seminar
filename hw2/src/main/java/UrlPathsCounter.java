@@ -1,4 +1,3 @@
-import org.apache.avro.JsonProperties;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -80,8 +79,16 @@ public class UrlPathsCounter extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t", 3);
             String url = split[2];
+            URI uri;
 
-            context.write(new Text(url), NullWritable.get());
+            try {
+                uri = new URI(url);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+                return;
+            }
+
+            context.write(new Text(uri.getHost() + "\t" + uri.getRawPath()), NullWritable.get());
         }
     }
 
@@ -96,17 +103,7 @@ public class UrlPathsCounter extends Configured implements Tool {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String url = value.toString().trim();
-            URI uri;
-
-            try {
-                uri = new URI(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                return;
-            }
-
-            String path = uri.getRawPath();
+            String path = value.toString().split("\t")[1];
 
             context.write(new Text(path), new LongWritable(1));
         }
