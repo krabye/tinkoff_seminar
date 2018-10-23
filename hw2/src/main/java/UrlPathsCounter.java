@@ -103,7 +103,7 @@ public class UrlPathsCounter extends Configured implements Tool {
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
-            assert uri != null;
+            assert uri == null;
 
             String path = uri.getRawPath();
 
