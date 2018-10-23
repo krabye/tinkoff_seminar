@@ -103,7 +103,8 @@ public class UrlPathsCounter extends Configured implements Tool {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String path = value.toString().split("\t")[1];
+            String[] split = value.toString().split("\t");
+            String path = split[1];
 
             context.write(new Text(path), new LongWritable(1));
         }
