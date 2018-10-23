@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class UrlPathsCounter extends Configured implements Tool {
+public class UrlParamsCounter extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         String input = args[0];
@@ -34,14 +34,14 @@ public class UrlPathsCounter extends Configured implements Tool {
     }
 
     static public void main(String[] args) throws Exception {
-        int ret = ToolRunner.run(new UrlPathsCounter(), args);
+        int ret = ToolRunner.run(new UrlParamsCounter(), args);
         System.exit(ret);
     }
 
     private Job getJobConf1(String input, String output) throws IOException {
         Job job = Job.getInstance(getConf());
-        job.setJarByClass(UrlPathsCounter.class);
-        job.setJobName(UrlPathsCounter.class.getCanonicalName());
+        job.setJarByClass(UrlParamsCounter.class);
+        job.setJobName(UrlParamsCounter.class.getCanonicalName());
 
         TextInputFormat.addInputPath(job, new Path(input));
         FileOutputFormat.setOutputPath(job, new Path(output));
@@ -57,8 +57,8 @@ public class UrlPathsCounter extends Configured implements Tool {
 
     private Job getJobConf2(String input, String output) throws IOException {
         Job job = Job.getInstance(getConf());
-        job.setJarByClass(UrlPathsCounter.class);
-        job.setJobName(UrlPathsCounter.class.getCanonicalName());
+        job.setJarByClass(UrlParamsCounter.class);
+        job.setJobName(UrlParamsCounter.class.getCanonicalName());
 
         TextInputFormat.addInputPath(job, new Path(input));
         FileOutputFormat.setOutputPath(job, new Path(output));
@@ -79,16 +79,8 @@ public class UrlPathsCounter extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t", 3);
             String url = split[2];
-            URI uri;
 
-            try {
-                uri = new URI(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                return;
-            }
-
-            context.write(new Text(uri.getHost() + "\t" + uri.getRawPath()), NullWritable.get());
+            context.write(new Text(url), NullWritable.get());
         }
     }
 
@@ -103,10 +95,17 @@ public class UrlPathsCounter extends Configured implements Tool {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String[] split = value.toString().split("\t");
-            if (split.length < 2)
+            String url = value.toString().trim();
+            URI uri;
+
+            try {
+                uri = new URI(url);
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
                 return;
-            String path = split[1];
+            }
+
+            String path = uri.getRawPath();
 
             context.write(new Text(path), new LongWritable(1));
         }
