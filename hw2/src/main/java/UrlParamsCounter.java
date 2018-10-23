@@ -11,10 +11,9 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UrlParamsCounter extends Configured implements Tool {
     @Override
@@ -79,24 +78,26 @@ public class UrlParamsCounter extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t", 3);
-            String url = split[2].replaceAll("\\|", "");
-            URI uri;
+            String url = split[2];
+            Pattern pattern = Pattern.compile("^(([^:/?#]+):)?(/?/?([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+            Matcher matcher = pattern.matcher(url);
 
-            try {
-                uri = new URI(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            if (!matcher.find()) {
+                context.getCounter("COMMON_COUNTERS", "SkippedUrls").increment(1);
                 return;
             }
 
-            String query = uri.getRawQuery();
+            String host = matcher.group(4);
+            String path = matcher.group(5);
+            String query = matcher.group(7);
+
             if (query == null)
                 return;
 
             for (String pair : query.split("&"))
                 if (!pair.equals("=") && pair.contains("="))
                     context.write(
-                            new Text(uri.getHost() + "/" + uri.getRawPath()),
+                            new Text(host + path),
                             new Text(pair.split("=")[0])
                     );
         }
