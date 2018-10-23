@@ -20,8 +20,17 @@ public class UrlPathsCounter extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         String input = args[0];
         String output = args[1]+"/unique_urls";
-        Job job = getJobConf1(input, output);
-        return job.waitForCompletion(true) ? 0 : 1;
+        Job job1 = getJobConf1(input, output);
+        if (!job1.waitForCompletion(true))
+            return 1;
+
+        input = output + "/part*";
+        output = args[1]+"/url_counts";
+        Job job2= getJobConf2(input, output);
+        if (!job2.waitForCompletion(true))
+            return 1;
+
+        return 0;
     }
 
     static public void main(String[] args) throws Exception {
@@ -86,7 +95,7 @@ public class UrlPathsCounter extends Configured implements Tool {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String url = value.toString();
+            String url = value.toString().trim();
             URI uri = null;
 
             try {
