@@ -25,7 +25,7 @@ public class UrlPathsCounter extends Configured implements Tool {
             return 1;
 
         input = output + "/part*";
-        output = args[1]+"/url_counts";
+        output = args[1]+"/path_counts";
         Job job2= getJobConf2(input, output);
         if (!job2.waitForCompletion(true))
             return 1;
@@ -109,6 +109,8 @@ public class UrlPathsCounter extends Configured implements Tool {
             if (split.length < 2)
                 return;
             String path = split[1];
+            if (path.endsWith("/"))
+                path = path.substring(0, path.length() - 1);
 
             context.write(new Text(path), new LongWritable(1));
         }
