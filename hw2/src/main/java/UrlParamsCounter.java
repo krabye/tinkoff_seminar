@@ -79,7 +79,7 @@ public class UrlParamsCounter extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t", 3);
-            String url = split[2];
+            String url = split[2].replaceAll("\\|", "");
             URI uri;
 
             try {
@@ -93,16 +93,12 @@ public class UrlParamsCounter extends Configured implements Tool {
             if (query == null)
                 return;
 
-            try {
-                for (String pair : query.split("&"))
-                    if (pair.contains("="))
-                        context.write(
-                                new Text(uri.getHost() + "/" + uri.getRawPath()),
-                                new Text(pair.split("=")[0])
-                        );
-            } catch (ArrayIndexOutOfBoundsException e){
-                System.out.println("url: " + url);
-            }
+            for (String pair : query.split("&"))
+                if (!pair.equals("=") && pair.contains("="))
+                    context.write(
+                            new Text(uri.getHost() + "/" + uri.getRawPath()),
+                            new Text(pair.split("=")[0])
+                    );
         }
     }
 
