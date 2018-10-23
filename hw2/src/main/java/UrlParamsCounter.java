@@ -105,7 +105,10 @@ public class UrlParamsCounter extends Configured implements Tool {
     public static class ReducerUnique extends Reducer<Text, Text, Text, Text> {
         @Override
         protected void reduce(Text key, Iterable<Text> params, Context context) throws IOException, InterruptedException {
-            HashSet<Text> params_set = new HashSet<>((Collection<? extends Text>) params);
+            HashSet<Text> params_set = new HashSet<>();
+            for (Text param: params)
+                params_set.add(param);
+
             for (Text param: params_set)
                 context.write(key, param);
         }
