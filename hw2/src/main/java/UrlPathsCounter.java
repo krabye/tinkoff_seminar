@@ -1,3 +1,4 @@
+import org.apache.avro.JsonProperties;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -96,14 +97,14 @@ public class UrlPathsCounter extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String url = value.toString().trim();
-            URI uri = null;
+            URI uri;
 
             try {
                 uri = new URI(url);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
+                return;
             }
-            assert uri == null;
 
             String path = uri.getRawPath();
 
