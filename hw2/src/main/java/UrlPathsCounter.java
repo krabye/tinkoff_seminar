@@ -89,6 +89,8 @@ public class UrlPathsCounter extends Configured implements Tool {
 
             String host = matcher.group(4);
             String path = matcher.group(5);
+            if (!path.endsWith("/"))
+                path += "/";
 
             context.write(new Text(host + "\t" + path), NullWritable.get());
         }
@@ -106,11 +108,7 @@ public class UrlPathsCounter extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t");
-            if (split.length < 2)
-                return;
             String path = split[1];
-            if (!path.endsWith("/"))
-                path += "/";
 
             context.write(new Text(path), new LongWritable(1));
         }
