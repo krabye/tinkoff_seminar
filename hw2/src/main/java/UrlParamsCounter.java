@@ -93,12 +93,16 @@ public class UrlParamsCounter extends Configured implements Tool {
             if (query == null)
                 return;
 
-            for (String pair: query.split("&"))
-                if (pair.contains("="))
-                    context.write(
-                            new Text(uri.getHost() + "/" + uri.getRawPath()),
-                            new Text(pair.split("=")[0])
-                    );
+            try {
+                for (String pair : query.split("&"))
+                    if (pair.contains("="))
+                        context.write(
+                                new Text(uri.getHost() + "/" + uri.getRawPath()),
+                                new Text(pair.split("=")[0])
+                        );
+            } catch (ArrayIndexOutOfBoundsException e){
+                System.out.println("url: " + url);
+            }
         }
     }
 
