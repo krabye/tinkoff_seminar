@@ -91,8 +91,10 @@ public class UrlParamsCounter extends Configured implements Tool {
             String path = matcher.group(5);
             String query = matcher.group(7);
 
-            if (query == null)
+            if (query == null) {
+                context.getCounter("COMMON_COUNTERS", "NoQuery").increment(1);
                 return;
+            }
 
             for (String pair : query.split("&"))
                 if (!pair.equals("=") && pair.contains("="))
