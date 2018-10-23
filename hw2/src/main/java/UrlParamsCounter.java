@@ -122,7 +122,7 @@ public class UrlParamsCounter extends Configured implements Tool {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String param = value.toString();
+            String param = value.toString().split("\t")[1];
 
             context.write(new Text(param), one);
         }
