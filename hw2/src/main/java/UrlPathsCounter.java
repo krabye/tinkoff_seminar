@@ -109,8 +109,8 @@ public class UrlPathsCounter extends Configured implements Tool {
             if (split.length < 2)
                 return;
             String path = split[1];
-            if (path.endsWith("/"))
-                path = path.substring(0, path.length() - 1);
+            if (!path.endsWith("/"))
+                path += "/";
 
             context.write(new Text(path), new LongWritable(1));
         }
