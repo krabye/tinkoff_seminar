@@ -12,8 +12,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UrlPathsCounter extends Configured implements Tool {
     @Override
@@ -79,16 +79,18 @@ public class UrlPathsCounter extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t", 3);
             String url = split[2];
-            URI uri;
+            Pattern pattern = Pattern.compile("^(([^:/?#]+):)?(/?/?([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?");
+            Matcher matcher = pattern.matcher(url);
 
-            try {
-                uri = new URI(url);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            if (!matcher.find()) {
+                context.getCounter("COMMON_COUNTERS", "SkippedUrls").increment(1);
                 return;
             }
 
-            context.write(new Text(uri.getHost() + "\t" + uri.getRawPath()), NullWritable.get());
+            String host = matcher.group(4);
+            String path = matcher.group(5);
+
+            context.write(new Text(host + "\t" + path), NullWritable.get());
         }
     }
 

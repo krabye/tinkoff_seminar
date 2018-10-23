@@ -126,7 +126,6 @@ public class UrlParamsCounter extends Configured implements Tool {
             if (split.length < 2)
                 return;
 
-
             context.write(new Text(split[1]), one);
         }
     }
