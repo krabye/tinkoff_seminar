@@ -1,7 +1,6 @@
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -14,6 +13,8 @@ import org.apache.hadoop.util.ToolRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class UrlParamsCounter extends Configured implements Tool {
     @Override
@@ -25,7 +26,7 @@ public class UrlParamsCounter extends Configured implements Tool {
             return 1;
 
         input = output + "/part*";
-        output = args[1]+"/url_counts";
+        output = args[1]+"/param_counts";
         Job job2= getJobConf2(input, output);
         if (!job2.waitForCompletion(true))
             return 1;
@@ -50,7 +51,7 @@ public class UrlParamsCounter extends Configured implements Tool {
         job.setReducerClass(ReducerUnique.class);
 
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(NullWritable.class);
+        job.setOutputValueClass(Text.class);
 
         return job;
     }
@@ -73,29 +74,12 @@ public class UrlParamsCounter extends Configured implements Tool {
         return job;
     }
 
-    public static class MapperUnique extends Mapper<LongWritable, Text, Text, NullWritable> {
+    public static class MapperUnique extends Mapper<LongWritable, Text, Text, Text> {
 
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String[] split = value.toString().split("\t", 3);
             String url = split[2];
-
-            context.write(new Text(url), NullWritable.get());
-        }
-    }
-
-    public static class ReducerUnique extends Reducer<Text, NullWritable, Text, NullWritable> {
-        @Override
-        protected void reduce(Text key, Iterable<NullWritable> visits, Context context) throws IOException, InterruptedException {
-            context.write(key, NullWritable.get());
-        }
-    }
-
-    public static class MapperCount extends Mapper<LongWritable, Text, Text, LongWritable> {
-
-        @Override
-        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            String url = value.toString().trim();
             URI uri;
 
             try {
@@ -105,17 +89,43 @@ public class UrlParamsCounter extends Configured implements Tool {
                 return;
             }
 
-            String path = uri.getRawPath();
+            String query = uri.getRawQuery();
+            if (query == null)
+                return;
 
-            context.write(new Text(path), new LongWritable(1));
+            for (String pair: query.split("&"))
+                context.write(
+                        new Text(uri.getHost() + "/" + uri.getRawPath()),
+                        new Text(pair.split("=")[0])
+                );
+        }
+    }
+
+    public static class ReducerUnique extends Reducer<Text, Text, Text, Text> {
+        @Override
+        protected void reduce(Text key, Iterable<Text> params, Context context) throws IOException, InterruptedException {
+            HashSet<Text> params_set = new HashSet<>((Collection<? extends Text>) params);
+            for (Text param: params_set)
+                context.write(key, param);
+        }
+    }
+
+    public static class MapperCount extends Mapper<LongWritable, Text, Text, LongWritable> {
+        static final LongWritable one = new LongWritable(1);
+
+        @Override
+        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String param = value.toString();
+
+            context.write(new Text(param), one);
         }
     }
 
     public static class ReducerCount extends Reducer<Text, LongWritable, Text, LongWritable> {
         @Override
-        protected void reduce(Text key, Iterable<LongWritable> visits, Context context) throws IOException, InterruptedException {
+        protected void reduce(Text key, Iterable<LongWritable> values, Context context) throws IOException, InterruptedException {
             long count = 0;
-            for (LongWritable i: visits)
+            for (LongWritable i: values)
                 count += i.get();
 
             context.write(key, new LongWritable(count));
