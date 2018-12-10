@@ -32,4 +32,6 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     if len(args) < 2:
         print "usage: python task5.py input_path output_path"
+    print "input path:", args[0]
+    print "output path:", args[1]
     task5(args[0], args[1])
